@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <title>Таблиця з info.json</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700&display=swap" rel="stylesheet">
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      min-height: 100vh;
+      height: 100vh;
+      width: 100vw;
+      background: linear-gradient(135deg, #232526 0%, #414345 100%);
+      font-family: 'Montserrat', sans-serif;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+    }
+    .container {
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: stretch;
+      width: 100vw;
+      height: 100vh;
+      min-height: 0;
+      min-width: 0;
+      padding: 0;
+      background: rgba(34, 49, 63, 0.85);
+      border-radius: 0;
+      box-shadow: 0 8px 32px 0 rgba(44,62,80,0.25);
+      border: none;
+      animation: fadeIn 1s;
+      backdrop-filter: blur(2px);
+    }
+    h1 {
+      text-align: center;
+      color: #f9ca24;
+      margin: 32px 0 24px 0;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-shadow: 0 2px 8px #222;
+      font-size: 2.2rem;
+    }
+    .search-box {
+      width: 100%;
+      max-width: 400px;
+      margin: 0 auto 18px auto;
+      display: block;
+      padding: 12px 18px;
+      border-radius: 12px;
+      border: 1.5px solid #f9ca24;
+      font-size: 1.08rem;
+      box-sizing: border-box;
+      outline: none;
+      background: #232526;
+      color: #f9ca24;
+      transition: border 0.2s, box-shadow 0.2s;
+      box-shadow: 0 2px 8px 0 rgba(44,62,80,0.10);
+      /* Відключаємо червоне виділення */
+      caret-color: #f9ca24;
+    }
+    .search-box:focus {
+      border: 2px solid #6ab04c;
+      box-shadow: 0 0 8px #6ab04c44;
+      background: #232526;
+      color: #f9ca24;
+    }
+    .search-box:invalid {
+      box-shadow: none;
+    }
+    .table-wrap {
+      flex: 1 1 auto;
+      overflow-x: auto;
+      overflow-y: auto;
+      padding: 0 16px 32px 16px;
+      min-height: 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      min-width: 700px;
+      background: transparent;
+      box-shadow: 0 4px 24px 0 rgba(44,62,80,0.10);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 8px 12px;  /* трішки менший відступ */
+      text-align: left;
+      font-size: 0.97rem; /* трішки менший шрифт */
+    }
+    th {
+      background: linear-gradient(90deg, #f9ca24 0%, #f6e58d 100%);
+      font-weight: 700;
+      color: #232526;
+      border-bottom: 3px solid #6ab04c;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      letter-spacing: 1px;
+      text-shadow: 0 1px 0 #fff8;
+    }
+    tr {
+      opacity: 0;
+      transform: translateY(30px);
+      animation: rowAppear 0.7s forwards;
+    }
+    /* Всі рядки одного кольору */
+    tr td {
+      background: rgba(52, 152, 219, 0.07); /* менш яскравий, світліший блакитний */
+      font-size: 0.97rem; /* трішки менший шрифт */
+      padding: 8px 12px;  /* трішки менший відступ */
+    }
+    tr:hover td {
+      background: #2980b91a; /* ще менш яскравий при наведенні */
+      transition: background 0.3s;
+    }
+    td {
+      border-bottom: 1px solid #23252633;
+      color: #f6e58d;
+      vertical-align: top;
+      word-break: break-word;
+      transition: background 0.3s;
+    }
+    @keyframes rowAppear {
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0;}
+      to { opacity: 1;}
+    }
+    @media (max-width: 700px) {
+      h1 {font-size: 1.2rem;}
+      th, td {font-size: 0.92rem; padding: 7px 6px;}
+      .table-wrap {padding: 0 2px 16px 2px;}
+      table {min-width: 400px;}
+    }
+    /* Відключаємо червоне виділення для input у Chrome */
+    input:invalid {
+      box-shadow: none;
+    }
+    input:focus:invalid {
+      box-shadow: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Таблиця з info.json</h1>
+    <input class="search-box" type="text" id="search" placeholder="Пошук...">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Назва роботи</th>
+            <th>Відділення</th>
+            <th>Регіон</th>
+          </tr>
+        </thead>
+        <tbody id="table-body">
+          <!-- JS вставить сюди рядки -->
+        </tbody>
+      </table>
+    </div>
+    <div id="pagination" style="display:flex;justify-content:center;gap:8px;margin-bottom:24px;"></div>
+  </div>
+  <script>
+    let allRecords = [];
+    let currentPage = 1;
+    const pageSize = 100;
+
+    fetch('info.json')
+      .then(res => res.json())
+      .then(data => {
+        allRecords = (data.records || []).filter(r => r.title && r.department && r.region);
+        renderTable(allRecords, currentPage);
+        renderPagination(allRecords.length, currentPage);
+      });
+
+    function renderTable(records, page) {
+      const tbody = document.getElementById('table-body');
+      tbody.innerHTML = '';
+      const start = (page - 1) * pageSize;
+      const end = start + pageSize;
+      records.slice(start, end).forEach((rec, i) => {
+        const tr = document.createElement('tr');
+        tr.style.animationDelay = (i * 0.04) + 's';
+        tr.innerHTML = `
+          <td>${rec.id ?? ''}</td>
+          <td>${rec.title ?? ''}</td>
+          <td>${rec.department ?? ''}</td>
+          <td>${rec.region ?? ''}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderPagination(total, page) {
+      const pages = Math.ceil(total / pageSize);
+      const pagDiv = document.getElementById('pagination');
+      pagDiv.innerHTML = '';
+      if (pages <= 1) return;
+
+      for (let i = 1; i <= pages; i++) {
+        const btn = document.createElement('button');
+        btn.textContent = i;
+        btn.style.padding = '6px 14px';
+        btn.style.margin = '0 2px';
+        btn.style.borderRadius = '6px';
+        btn.style.border = '1px solid #f9ca24';
+        btn.style.background = i === page ? '#f9ca24' : '#232526';
+        btn.style.color = i === page ? '#232526' : '#f9ca24';
+        btn.style.cursor = 'pointer';
+        btn.style.fontWeight = i === page ? 'bold' : 'normal';
+        btn.onclick = () => {
+          currentPage = i;
+          renderTable(allRecords, currentPage);
+          renderPagination(allRecords.length, currentPage);
+          window.scrollTo({top: 0, behavior: 'smooth'});
+        };
+        pagDiv.appendChild(btn);
+      }
+    }
+
+    document.getElementById('search').addEventListener('input', function() {
+      const q = this.value.trim().toLowerCase();
+      const filtered = allRecords.filter(r =>
+        (r.id + '').includes(q) ||
+        (r.title ?? '').toLowerCase().includes(q) ||
+        (r.department ?? '').toLowerCase().includes(q) ||
+        (r.region ?? '').toLowerCase().includes(q)
+      );
+      currentPage = 1;
+      renderTable(filtered, currentPage);
+      renderPagination(filtered.length, currentPage);
+    });
+  </script>
+</body>
+</html>
