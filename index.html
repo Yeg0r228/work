@@ -36,7 +36,7 @@
       padding: 0;
       background: rgba(34, 49, 63, 0.85);
       border-radius: 0;
-      box-shadow: 0 8px 32px 0 rgba(44,62,80,0.25);
+      box-shadow: 0 8px 32px 0 rgba(45,62,80,0.25);
       border: none;
       animation: fadeIn 1s;
       backdrop-filter: blur(2px);
@@ -114,23 +114,34 @@
       opacity: 0;
       transform: translateY(30px);
       animation: rowAppear 0.7s forwards;
+      transition: box-shadow 0.25s, transform 0.25s, background 0.3s;
     }
-    /* Всі рядки одного кольору */
     tr td {
-      background: rgba(52, 152, 219, 0.07); /* менш яскравий, світліший блакитний */
-      font-size: 0.97rem; /* трішки менший шрифт */
-      padding: 8px 12px;  /* трішки менший відступ */
+      background: rgba(44, 62, 80, 0.13); /* темно-синій відтінок */
+      font-size: 0.97rem;
+      padding: 8px 12px;
+      color: #f9f9f9; /* світлий текст */
+      font-weight: 500;
+      transition: background 0.3s, color 0.3s;
+      text-shadow: 0 1px 2px #2228;
+    }
+    tr:hover {
+      transform: scale(1.025);
+      box-shadow: 0 4px 18px 0 rgba(52, 152, 219, 0.18), 0 1.5px 6px 0 rgba(0,0,0,0.10);
+      z-index: 2;
     }
     tr:hover td {
-      background: #2980b91a; /* ще менш яскравий при наведенні */
-      transition: background 0.3s;
+      background: #232526;
+      color: #ffe066;
     }
-    td {
-      border-bottom: 1px solid #23252633;
-      color: #f6e58d;
-      vertical-align: top;
-      word-break: break-word;
-      transition: background 0.3s;
+    /* Анімація для сторінок */
+    tbody {
+      transition: opacity 0.35s cubic-bezier(.4,0,.2,1);
+      opacity: 1;
+    }
+    tbody.fading {
+      opacity: 0;
+      pointer-events: none;
     }
     @keyframes rowAppear {
       to {
@@ -182,16 +193,31 @@
     let allRecords = [];
     let currentPage = 1;
     const pageSize = 100;
+    let lastFiltered = [];
 
     fetch('info.json')
       .then(res => res.json())
       .then(data => {
         allRecords = (data.records || []).filter(r => r.title && r.department && r.region);
-        renderTable(allRecords, currentPage);
+        lastFiltered = allRecords;
+        renderTable(allRecords, currentPage, true);
         renderPagination(allRecords.length, currentPage);
       });
 
-    function renderTable(records, page) {
+    function renderTable(records, page, instant = false) {
+      const tbody = document.getElementById('table-body');
+      if (!instant) {
+        tbody.classList.add('fading');
+        setTimeout(() => {
+          fillTable(records, page);
+          tbody.classList.remove('fading');
+        }, 250);
+      } else {
+        fillTable(records, page);
+      }
+    }
+
+    function fillTable(records, page) {
       const tbody = document.getElementById('table-body');
       tbody.innerHTML = '';
       const start = (page - 1) * pageSize;
@@ -226,11 +252,16 @@
         btn.style.color = i === page ? '#232526' : '#f9ca24';
         btn.style.cursor = 'pointer';
         btn.style.fontWeight = i === page ? 'bold' : 'normal';
+        btn.style.transition = 'background 0.2s, color 0.2s, box-shadow 0.2s';
+        btn.onmouseenter = () => { btn.style.boxShadow = '0 2px 8px #f9ca2444'; };
+        btn.onmouseleave = () => { btn.style.boxShadow = 'none'; };
         btn.onclick = () => {
-          currentPage = i;
-          renderTable(allRecords, currentPage);
-          renderPagination(allRecords.length, currentPage);
-          window.scrollTo({top: 0, behavior: 'smooth'});
+          if (currentPage !== i) {
+            currentPage = i;
+            renderTable(lastFiltered, currentPage);
+            renderPagination(lastFiltered.length, currentPage);
+            window.scrollTo({top: 0, behavior: 'smooth'});
+          }
         };
         pagDiv.appendChild(btn);
       }
@@ -238,15 +269,15 @@
 
     document.getElementById('search').addEventListener('input', function() {
       const q = this.value.trim().toLowerCase();
-      const filtered = allRecords.filter(r =>
+      lastFiltered = allRecords.filter(r =>
         (r.id + '').includes(q) ||
         (r.title ?? '').toLowerCase().includes(q) ||
         (r.department ?? '').toLowerCase().includes(q) ||
         (r.region ?? '').toLowerCase().includes(q)
       );
       currentPage = 1;
-      renderTable(filtered, currentPage);
-      renderPagination(filtered.length, currentPage);
+      renderTable(lastFiltered, currentPage, true);
+      renderPagination(lastFiltered.length, currentPage);
     });
   </script>
 </body>
