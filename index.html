@@ -166,119 +166,84 @@
     input:focus:invalid {
       box-shadow: none;
     }
+    /* Додаємо стилі для карток */
+    .cards-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 18px;
+      justify-content: center;
+      padding: 0 16px 32px 16px;
+      min-height: 0;
+    }
+    .card {
+      background: rgba(44, 62, 80, 0.93);
+      border-radius: 16px;
+      box-shadow: 0 4px 24px 0 rgba(44,62,80,0.13);
+      padding: 22px 18px 18px 18px;
+      min-width: 220px;
+      max-width: 270px;
+      flex: 1 1 220px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      position: relative;
+      transition: transform 0.2s, box-shadow 0.2s;
+      color: #f9f9f9;
+      border: 2px solid #f9ca24;
+      cursor: pointer;
+      animation: rowAppear 0.7s forwards;
+    }
+    .card:hover {
+      transform: scale(1.045);
+      box-shadow: 0 8px 32px 0 #f9ca2444, 0 2px 8px 0 rgba(0,0,0,0.10);
+      border-color: #ffe066;
+    }
+    .card .card-id {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #ffe066;
+      margin-bottom: 8px;
+      letter-spacing: 1px;
+    }
+    .card .card-title {
+      font-size: 1.13rem;
+      font-weight: 800;
+      margin-bottom: 10px;
+      color: #f9ca24;
+      text-shadow: 0 1px 4px #2228;
+    }
+    .card .card-dep, .card .card-region {
+      font-size: 0.98rem;
+      margin-bottom: 4px;
+      color: #f6e58d;
+      font-weight: 500;
+    }
+    .card .card-region {
+      color: #6ab04c;
+      margin-bottom: 0;
+    }
+    @media (max-width: 700px) {
+      .cards-wrap {gap: 8px;}
+      .card {min-width: 140px; max-width: 99vw; padding: 12px 8px;}
+      .card .card-title {font-size: 1rem;}
+      .card .card-id {font-size: 0.98rem;}
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Таблиця з info.json</h1>
-    <input class="search-box" type="text" id="search" placeholder="Пошук...">
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Назва роботи</th>
-            <th>Відділення</th>
-            <th>Регіон</th>
-          </tr>
-        </thead>
-        <tbody id="table-body">
-          <!-- JS вставить сюди рядки -->
-        </tbody>
-      </table>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:12px;">
+      <input class="search-box" type="text" id="search-input-cards" placeholder="Пошук...">
+      <select id="department-filter-cards" style="padding:10px 12px;border-radius:8px;border:1.5px solid #f9ca24;font-size:1.08rem;background:#232526;color:#f9ca24;">
+        <option value="">Всі відділення</option>
+      </select>
+      <select id="region-filter-cards" style="padding:10px 12px;border-radius:8px;border:1.5px solid #f9ca24;font-size:1.08rem;background:#232526;color:#f9ca24;">
+        <option value="">Всі області</option>
+      </select>
     </div>
-    <div id="pagination" style="display:flex;justify-content:center;gap:8px;margin-bottom:24px;"></div>
+    <div id="cards-container" class="cards-wrap"></div>
   </div>
-  <script>
-    let allRecords = [];
-    let currentPage = 1;
-    const pageSize = 100;
-    let lastFiltered = [];
-
-    fetch('info.json')
-      .then(res => res.json())
-      .then(data => {
-        allRecords = (data.records || []).filter(r => r.title && r.department && r.region);
-        lastFiltered = allRecords;
-        renderTable(allRecords, currentPage, true);
-        renderPagination(allRecords.length, currentPage);
-      });
-
-    function renderTable(records, page, instant = false) {
-      const tbody = document.getElementById('table-body');
-      if (!instant) {
-        tbody.classList.add('fading');
-        setTimeout(() => {
-          fillTable(records, page);
-          tbody.classList.remove('fading');
-        }, 250);
-      } else {
-        fillTable(records, page);
-      }
-    }
-
-    function fillTable(records, page) {
-      const tbody = document.getElementById('table-body');
-      tbody.innerHTML = '';
-      const start = (page - 1) * pageSize;
-      const end = start + pageSize;
-      records.slice(start, end).forEach((rec, i) => {
-        const tr = document.createElement('tr');
-        tr.style.animationDelay = (i * 0.04) + 's';
-        tr.innerHTML = `
-          <td>${rec.id ?? ''}</td>
-          <td>${rec.title ?? ''}</td>
-          <td>${rec.department ?? ''}</td>
-          <td>${rec.region ?? ''}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    function renderPagination(total, page) {
-      const pages = Math.ceil(total / pageSize);
-      const pagDiv = document.getElementById('pagination');
-      pagDiv.innerHTML = '';
-      if (pages <= 1) return;
-
-      for (let i = 1; i <= pages; i++) {
-        const btn = document.createElement('button');
-        btn.textContent = i;
-        btn.style.padding = '6px 14px';
-        btn.style.margin = '0 2px';
-        btn.style.borderRadius = '6px';
-        btn.style.border = '1px solid #f9ca24';
-        btn.style.background = i === page ? '#f9ca24' : '#232526';
-        btn.style.color = i === page ? '#232526' : '#f9ca24';
-        btn.style.cursor = 'pointer';
-        btn.style.fontWeight = i === page ? 'bold' : 'normal';
-        btn.style.transition = 'background 0.2s, color 0.2s, box-shadow 0.2s';
-        btn.onmouseenter = () => { btn.style.boxShadow = '0 2px 8px #f9ca2444'; };
-        btn.onmouseleave = () => { btn.style.boxShadow = 'none'; };
-        btn.onclick = () => {
-          if (currentPage !== i) {
-            currentPage = i;
-            renderTable(lastFiltered, currentPage);
-            renderPagination(lastFiltered.length, currentPage);
-            window.scrollTo({top: 0, behavior: 'smooth'});
-          }
-        };
-        pagDiv.appendChild(btn);
-      }
-    }
-
-    document.getElementById('search').addEventListener('input', function() {
-      const q = this.value.trim().toLowerCase();
-      lastFiltered = allRecords.filter(r =>
-        (r.id + '').includes(q) ||
-        (r.title ?? '').toLowerCase().includes(q) ||
-        (r.department ?? '').toLowerCase().includes(q) ||
-        (r.region ?? '').toLowerCase().includes(q)
-      );
-      currentPage = 1;
-      renderTable(lastFiltered, currentPage, true);
-      renderPagination(lastFiltered.length, currentPage);
-    });
-  </script>
+  <script src="js/cards.js"></script>
 </body>
 </html>
